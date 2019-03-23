@@ -3,12 +3,13 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
-
 tfd = tfp.distributions
-
-import math
 import utils as utils
 from sklearn import metrics
+
+"""NVDM Tensorflow implementation by Yishu Miao(https://github.com/ysmiao/nvdm),
+ adapted to work with the Dirichlet distribution by Sophie Burkhardt
+ ,adapted to work as semi-supervised classifier by Julia Siekiera"""
 
 #use this just with binary class
 
@@ -103,7 +104,7 @@ class NVDM(object):
 
         self.x_unlabeled = tf.placeholder(tf.float32, [None, vocab_size], name='x_unlabeled')
 
-        # TODO this could be done in a better way...
+        # TODO extend this to more than 2 classes...
 
         self.y_neg = tf.placeholder(tf.float32, [None, n_class], name='y_neg')
         self.y_pos = tf.placeholder(tf.float32, [None, n_class], name='y_pos')
@@ -230,7 +231,7 @@ class NVDM(object):
                       self.training.name: is_training}
 
         prediction = [sess.run(([self.out_y]), input_feed) for _ in range(n_dropout_rounds)]
-        return prop_clss,f1_measure[1], prediction
+        return f1_measure[1], prediction,prop_clss
 
     def run_model(self,
                   train_batches_with_lab,

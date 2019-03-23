@@ -11,7 +11,9 @@ import math
 import utils as utils
 
 from sklearn import metrics
-
+"""NVDM Tensorflow implementation by Yishu Miao(https://github.com/ysmiao/nvdm),
+ adapted to work with the Dirichlet distribution by Sophie Burkhardt
+ ,adapted to work as semi-supervised classifier by Julia Siekiera"""
 class NVDM(object):
     def __init__(self,
                  vocab_size,
@@ -217,7 +219,7 @@ class NVDM(object):
         if semi_supervised and len(train_batches_without_lab)>0:
             for clss_idx in range(1):
                 for idx_batch in train_batches_without_lab:
-                    data_batch, count_batch, mask = utils.fetch_data_new(train_set_without_lab,idx_batch, self.vocab_size)
+                    data_batch,  mask = utils.fetch_data_new(train_set_without_lab,idx_batch, self.vocab_size)
                     data_batch_y = utils.fetch_data_y_dummy(idx_batch, self.n_clss,clss_idx)
                     input_feed = {self.x.name: data_batch, self.y.name: data_batch_y, self.mask.name: mask,
                                   self.keep_prob.name: keep_prop, self.lab: np.zeros((1)),
@@ -284,7 +286,7 @@ class NVDM(object):
               n_dropout_rounds=100,
               max_learning_iterations=100,
               no_improvement_iterations=15,
-              semi_supervised=True, debug=True
+              semi_supervised=True, debug=True,it=0
               ):
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
@@ -366,4 +368,4 @@ class NVDM(object):
                       self.lab: np.zeros((1)),self.idx.name:np.zeros((1),dtype=np.int32),self.training.name:is_training}
 
         prediction = [sess.run(([self.out_y]), input_feed) for _ in range(n_dropout_rounds)]
-        return test_pred,f1_measure, prediction
+        return f1_measure, prediction,test_pred

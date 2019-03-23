@@ -26,7 +26,7 @@ def parseArgs():
     argparser.add_argument('--dir_prior', default=0.1, type=float)
     argparser.add_argument('--n_topic', default=75, type=int)
     argparser.add_argument('--learning_rate', default=1e-3, type=float)
-    argparser.add_argument('--data_dir', default="/data",type=str)
+    argparser.add_argument('--data_dir', default="data",type=str)
     argparser.add_argument('--batch_size', default=50, type=int)
     argparser.add_argument('--n_hidden', default="512,256", type=str)
     argparser.add_argument('--warm_up_period', default=100, type=int)
@@ -36,16 +36,16 @@ def parseArgs():
     argparser.add_argument('--use_density_mul', default=0, type=int)
     argparser.add_argument('--random_init_docs', default=1, type=int)
     argparser.add_argument('--density_file', default='density_fold_old_', type=str)
-    argparser.add_argument('--max_learning_it', default=100, type=int)
-    argparser.add_argument('--no_improvement_it', default=20, type=int)
+    argparser.add_argument('--max_learning_it', default=300, type=int)
+    argparser.add_argument('--no_improvement_it', default=1, type=int)
     argparser.add_argument('--random_selection', default=0, type=int)  # choose active learning or random
     argparser.add_argument('--semi_supervised', default=1, type=int)
-    argparser.add_argument('--job_data', default="122", type=str)# second num: fold_num third: seed
+    argparser.add_argument('--job_data', default="100", type=str)# second num: fold_num third: seed
     argparser.add_argument('--VAE_version', default="V1", type=str)#'V1','V2','V3'
-    argparser.add_argument('--representativeness', default="PU", type=str)#"density","submod","PU","random"
-
-    argparser.add_argument('--out_file', default="random.pkl", type=str)
+    argparser.add_argument('--representativeness', default="random", type=str)#"density","submod","PU","random"
     argparser.add_argument('--sub_set_size', default=100, type=int)
+    argparser.add_argument('--out_file', default="random.pkl", type=str)
+
 
     return argparser.parse_args()  # argstring.split()
 
@@ -266,9 +266,9 @@ def active_learning(train_set_d, train_set_y_d,
             select_docs = cals_docs_to_add_density
     else:
         select_docs = cals_docs_to_add
-    if args.VAE_version=="v1":
+    if args.VAE_version=="V1":
         import v1 as nvdm_dirichlet
-    if args.VAE_version == "v2":
+    elif args.VAE_version == "V2":
         import v2 as nvdm_dirichlet
     else:
         import v3 as nvdm_dirichlet
@@ -341,7 +341,9 @@ def active_learning(train_set_d, train_set_y_d,
                     label_keys_sub = select_docs(prediction_unlabeled_data, doc_density, len(unlabeled_keys),
                                                  unlabeled_keys, uncertainty_strategy,args.sub_set_size)
                 all_data_x = train_set_with_lab + dev_set_with_lab + train_set_without_labx
-                if args.representativeness=="submod":
+                if args.sub_set_size==docs_to_add:
+                    label_keys_new = label_keys_sub
+                elif args.representativeness=="submod":
                     y_labels = get_y_labs(prediction_unlabeled_data, label_keys_sub, unlabeled_keys)
 
 

@@ -3,7 +3,7 @@ import random
 import numpy as np
 import math
 
-
+"""implementation by Yishu Miao (https://github.com/ysmiao/nvdm), adapted with some additional methods by Julia Siekiera"""
 def data_set_y(data_url):
     data = []
     fin = open(data_url)
@@ -155,47 +155,6 @@ def fetch_data_new(data, idx_batch, vocab_size):
             mask[i] = 1.0
     return data_batch, mask
 
-def fetch_data(data, count, idx_batch, vocab_size):
-    """fetch input data by batch."""
-    batch_size = len(idx_batch)
-    data_batch = np.zeros((batch_size, vocab_size))
-    count_batch = []
-    mask = np.zeros(batch_size)
-    indices = []
-    values = []
-    for i, doc_id in enumerate(idx_batch):
-        if doc_id != -1:
-            for word_id, freq in data[doc_id].items():
-                data_batch[i, word_id] = freq
-            count_batch.append(count[doc_id])
-            mask[i] = 1.0
-        else:
-            count_batch.append(0)
-    return data_batch, count_batch, mask
-
-
-def fetch_data_without_lab(data, count, idx_batch, vocab_size,n_clss):
-    """fetch input data by batch."""
-    batch_size = len(idx_batch*n_clss)
-    data_batch_y = np.zeros((batch_size, n_clss))
-    data_batch = np.zeros((batch_size, vocab_size))
-    count_batch = []
-    mask = np.zeros(batch_size)
-    indices = []
-    values = []
-    for i, doc_id in enumerate(idx_batch):
-        if doc_id != -1:
-            for j in range(n_clss):
-                for word_id, freq in data[doc_id].items():
-                    data_batch[i*n_clss+j, word_id] = freq
-                count_batch.append(count[doc_id])
-                data_batch_y[i*n_clss+j,j]=1.0
-                mask[i] = 1.0
-
-        else:
-            count_batch.append(0)
-    return data_batch, count_batch, mask,data_batch_y
-
 
 def variable_parser(var_list, prefix):
     """return a subset of the all_variables by prefix."""
@@ -208,45 +167,6 @@ def variable_parser(var_list, prefix):
         elif prefix in varname:
             ret_list.append(var)
     return ret_list
-
-
-def xavier_init(fan_in, fan_out, constant=1):
-    low = -constant * np.sqrt(6.0 / (fan_in + fan_out))
-    high = constant * np.sqrt(6.0 / (fan_in + fan_out))
-    return tf.random_uniform((fan_in, fan_out),
-                             minval=low, maxval=high,
-                             dtype=tf.float32),high
-
-
-def linear_LDA(inputs,
-               output_size,
-               no_bias=False,
-               bias_start_zero=False,
-               matrix_start_zero=False,
-               scope=None):
-    """Define a linear connection."""
-    with tf.variable_scope(scope or 'Linear'):
-        if matrix_start_zero:
-            matrix_initializer = tf.constant_initializer(
-                0)  # (tf.truncated_normal_initializer()+1.0)/100.#tf.constant_initializer(0)
-        else:
-            matrix_initializer = None  # tf.truncated_normal_initializer(mean = 0.0, stddev=0.01)#None
-        if bias_start_zero:
-            bias_initializer = tf.constant_initializer(0)
-        else:
-            bias_initializer = None  # tf.constant_initializer(0.1)#tf.truncated_normal_initializer(mean = 0.0 , stddev=0.01)#None
-        input_size = inputs.get_shape()[1].value
-        # tf.Variable(xavier_init(input_size, output_size))
-        matrix = tf.nn.softmax(tf.contrib.layers.batch_norm(tf.Variable(xavier_init(input_size, output_size))))
-        # tf.get_variable('Matrix', [input_size, output_size],initializer=matrix_initializer)
-        # matrix = tf.Print(matrix,[matrix[0]],summarize=50,message='phi')
-
-        output = tf.matmul(inputs, matrix)  # no softmax on input, it should already be normalized
-        if not no_bias:
-            bias_term = tf.get_variable('Bias', [output_size],
-                                        initializer=bias_initializer)
-            output = output + bias_term
-    return output
 
 
 def linear(inputs,
@@ -268,10 +188,7 @@ def linear(inputs,
             bias_initializer = None  # tf.constant_initializer(0.1)#tf.truncated_normal_initializer(mean = 0.0 , stddev=0.01)#None
         input_size = inputs.get_shape()[1].value
         matrix = tf.get_variable('Matrix', [input_size, output_size], initializer=matrix_initializer)
-        #matrix_init,s=xavier_init(input_size, output_size)
-        #matrix = tf.Variable(matrix_init,name='Matrix',dtype=tf.float32)
-        # matrix = tf.nn.softmax(tf.contrib.layers.batch_norm(tf.Variable(xavier_init(input_size, output_size))))
-        #matrix=tf.get_variable('Matrix', [input_size, output_size], initializer=matrix_init)
+
         output = tf.matmul(inputs, matrix)
         if not no_bias:
             bias_term = tf.get_variable('Bias', [output_size],initializer=bias_initializer)
@@ -292,21 +209,7 @@ def mlp(inputs,
         return res
 
 
-def fetch_data_w_c(data, idx_batch):
-    """fetch input data by batch."""
-    batch_size = len(idx_batch)
-    data_batch = []
-    mask = np.zeros(batch_size)
-    shape=data[0].shape
-    for i, doc_id in enumerate(idx_batch):
 
-        if doc_id != -1:
-            data_batch.append(data[doc_id])
-            mask[i] = 1.0
-        else:
-            data_batch.append(np.zeros(shape))
-
-    return np.asarray(data_batch), mask
 def fetch_data_without_idx_new(to_label, vocab_size):
     batch_size = len(to_label)
     data_batch = np.zeros((batch_size, vocab_size))
@@ -319,20 +222,7 @@ def fetch_data_without_idx_new(to_label, vocab_size):
     return data_batch,mask
 
 
-def fetch_data_without_idx(train_set_without_lab, count, vocab_size):
-    """fetch input data by batch."""
-    batch_size = len(train_set_without_lab)
-    data_batch = np.zeros((batch_size, vocab_size))
-    count_batch = []
-    mask = np.zeros(batch_size)
-    for i in range(batch_size):
 
-        for word_id, freq in train_set_without_lab[i].items():
-            data_batch[i, word_id] = freq
-        count_batch.append(count[i])
-        mask[i] = 1.0
-
-    return data_batch, count_batch, mask
 
 
 
