@@ -13,5 +13,5 @@ active learning code requieres python 3.6+ and tensorflow-1.12+
         |        Lucene are requiered)
         |--python: 
               |--evaluation: contains proposed active learning methods with differnt models + QBC Naive Bayes with EM
-              |       |--asiddhant: adaptet code of https://github.com/asiddhant/Active-NLP
-              |--preprocessing: Further preprocession files
+              |       |--asiddhant: adapted code of https://github.com/asiddhant/Active-NLP
+              |--pre_processing: Further preprocession files
