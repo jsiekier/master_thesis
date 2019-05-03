@@ -15,6 +15,9 @@ import  usefull as use
 import numpy as np
 import pandas as pd
 import pickle
+import v1
+import v2
+import v3
 
 
 def parseArgs():
@@ -40,7 +43,7 @@ def parseArgs():
     argparser.add_argument('--no_improvement_it', default=1, type=int)
     argparser.add_argument('--random_selection', default=0, type=int)  # choose active learning or random
     argparser.add_argument('--semi_supervised', default=1, type=int)
-    argparser.add_argument('--job_data', default="100", type=str)# second num: fold_num third: seed
+    argparser.add_argument('--job_data', default="00", type=str)# first num: fold_num second: seed
     argparser.add_argument('--VAE_version', default="V1", type=str)#'V1','V2','V3'
     argparser.add_argument('--representativeness', default="random", type=str)#"density","submod","PU","random"
     argparser.add_argument('--sub_set_size', default=100, type=int)
@@ -120,7 +123,7 @@ def calc_variation(prediction_unlabeled_data):
     return variation_arr
 
 
-def calc_blast(prediction_unlabeled_data):
+def calc_bald(prediction_unlabeled_data):
     blast_arr = []
     T = len(prediction_unlabeled_data)
     clss_len = len(prediction_unlabeled_data[0][0][0])
@@ -153,7 +156,7 @@ def cals_docs_to_add(prediction_unlabeled_data, doc_density, docs_to_add, unlabe
 
         disagree.append((uncertainty_arr[i], doc_id))
     # sort
-    sorted_list = use.merge_sort(disagree)
+    sorted_list = use.sort_desc(disagree)
     # select best docs:
     for i in range(docs_to_add):
         new_train.append(sorted_list[i][1])
@@ -173,7 +176,7 @@ def cals_docs_to_add_density(prediction_unlabeled_data, doc_density, docs_to_add
 
         disagree.append((uncertainty_arr[i], doc_id))
     # sort by disagreement
-    sorted_list = use.merge_sort(disagree)
+    sorted_list = use.sort_desc(disagree)
 
     disagree2 = []
     if len(unlabeled_keys) > sub_set_size:
@@ -182,7 +185,7 @@ def cals_docs_to_add_density(prediction_unlabeled_data, doc_density, docs_to_add
             disagree2.append((-doc_density[doc_id], doc_id))
 
         # sort by density
-        sorted_list2 = use.merge_sort(disagree2)
+        sorted_list2 = use.sort_desc(disagree2)
 
         # select best docs:
         for i in range(docs_to_add):
@@ -207,7 +210,7 @@ def cals_docs_to_add_density_mul(prediction_unlabeled_data, doc_density, docs_to
 
         disagree.append((uncertainty_arr[i] * doc_density[doc_id], doc_id))
     # sort by disagreement * density
-    sorted_list = use.merge_sort(disagree)
+    sorted_list = use.sort_desc(disagree)
     # select best docs:
     for i in range(docs_to_add):
         new_train.append(sorted_list[i][1])
@@ -219,7 +222,7 @@ def calc_best_density(key_arr, init_add_num, doc_density):
     output = []
     for i in key_arr:
         dens_arr.append((doc_density[i], i))
-    sorted_list = use.merge_sort(dens_arr)
+    sorted_list = use.sort_desc(dens_arr)
     for i in range(init_add_num):
         output.append(sorted_list[i][1])
     return output
@@ -258,7 +261,7 @@ def active_learning(train_set_d, train_set_y_d,
     elif args.uncertainty_strategy == "variation":
         uncertainty_strategy = calc_variation
     else:
-        uncertainty_strategy = calc_blast
+        uncertainty_strategy = calc_bald
     if args.representativeness=="density":
         if args.use_density_mul:
                 select_docs = cals_docs_to_add_density_mul
@@ -267,11 +270,11 @@ def active_learning(train_set_d, train_set_y_d,
     else:
         select_docs = cals_docs_to_add
     if args.VAE_version=="V1":
-        import v1 as nvdm_dirichlet
+        nvdm_dirichlet=v1
     elif args.VAE_version == "V2":
-        import v2 as nvdm_dirichlet
+        nvdm_dirichlet=v2
     else:
-        import v3 as nvdm_dirichlet
+        nvdm_dirichlet=v3
 
     if not doc_keys:
         label_keys = random.sample(range(0, len(train_set_y_d)), init_add)
@@ -526,8 +529,8 @@ if __name__ == "__main__":
     summary_file = open(out_path, "w")
 
     job_data = args.job_data
-    fold_id = int(job_data[1])
-    my_seed = int(job_data[0])
+    fold_id = int(job_data[0])
+    my_seed = int(job_data[1])
 
     args = parseArgs()
     docs_to_add = args.docs_to_add
