@@ -1,5 +1,6 @@
 # Active Semi-supervised Variational Autoencoders under Representativeness Constraints
 This project applies semi-supervised VAEs on pool-based uncertainty active learning. To respect the underlying class distribution different representativeness strategies can be added.
+To find the original published code of the thesis:    git checkout thesis_release
 # Installatiion
 active learning code requieres python 3.6+ and tensorflow-1.12+
 # Project Structure
